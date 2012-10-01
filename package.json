@@ -1,0 +1,15 @@
+{
+  "name": "recognize.im",
+  "version": "0.9.1",
+  "dependencies": {
+    "xml2js": "*"
+  },
+  "engines": {
+    "node": "*"
+  },
+  "description": "Recognize.im API",
+  "mantainers": [
+    "Recognize.im <support@recognize.im> (http://www.recognize.im/site/contact)",
+    "VizjereiX <szajek@programa.pl>"
+  ]
+}
