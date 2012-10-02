@@ -1,11 +1,15 @@
 {
   "name": "recognize.im",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "dependencies": {
     "xml2js": "*"
   },
   "engines": {
     "node": "*"
+  },
+    "repository": {
+    "type": "git",
+    "url": "https://github.com/RecognizeIm/node.js-client.git"
   },
   "description": "Recognize.im API",
   "mantainers": [
