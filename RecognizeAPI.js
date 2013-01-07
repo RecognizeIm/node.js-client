@@ -195,12 +195,12 @@ exports.on = function(type, callback) {
 /**************************************************************************************************************/
 
 // recognize object using given photo and call given callback
-exports.recognize = function(data, callback){
+exports.recognize = function(data, callback, allResults){
   var hash = crypto.createHash('md5', 'ascii').update(API_KEY).update(data, "binary").digest("hex");
   var options = {
     host: 'clapi.itraff.pl',
     port: 80,
-    path: '/recognize/'+CLIENT_ID,
+    path: '/recognize/' + (allResults?"allResults/":"")+CLIENT_ID,
     method: 'POST'
   };
 
