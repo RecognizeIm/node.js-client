@@ -195,13 +195,19 @@ exports.on = function(type, callback) {
 /**************************************************************************************************************/
 
 // recognize object using given photo and call given callback
-exports.recognize = function(data, callback, allResults){
+exports.recognize = function(data, callback, mode, allResults){
+  var path = '/recognize/';
+  if (mode == 'multi') {
+      path = path + 'multi/';
+  } else if (allResults) {
+      path = path + 'allResults/';
+  }
   var hash = crypto.createHash('md5', 'ascii').update(API_KEY).update(data, "binary").digest("hex");
   var options = {
-    host: 'clapi.itraff.pl',
-    port: 80,
-    path: '/recognize/' + (allResults?"allResults/":"")+CLIENT_ID,
-    method: 'POST'
+    'host': 'clapi.itraff.pl',
+    'port': 80,
+    'path': path + CLIENT_ID,
+    'method': 'POST'
   };
 
   var req = http.request(options, function(res) {
@@ -327,6 +333,20 @@ exports.indexStatus = function() {
 exports.keyGet = function(regenerate) {
 		var params = "<regenerate>"+regenerate+"</regenerate>"
     callSoapMethod('keyGet', params);
+}
+
+/**
+ * Toggle recognition mode between 'single' and 'multi'
+ */
+exports.modeSet = function() {
+  	callSoapMethod('modeSet');
+}
+
+/**
+ * Get current recognition mode
+ */
+exports.modeGet = function() {
+  	callSoapMethod('modeGet');
 }
 
 /**
