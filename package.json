@@ -2,7 +2,8 @@
   "name": "recognize.im",
   "version": "0.9.4",
   "dependencies": {
-    "xml2js": "*"
+    "xml2js": "*",
+    "imageinfo": "*"
   },
   "engines": {
     "node": "*"

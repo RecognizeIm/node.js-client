@@ -2,7 +2,7 @@ var querystring = require("querystring"),
     fs = require("fs"),
     formidable = require("formidable"),
     utils = require("util"),
-    iTraffAPI = require("Recognize.im");
+    iTraffAPI = require("recognize.im");
    
 
 iTraffAPI.setCredentials(64, '6d97d28451', '4430d3822ff5d8c640de55a4f35218d8');
@@ -19,7 +19,8 @@ function start(response) {
     '<form action="/recognize" enctype="multipart/form-data" '+
     'method="post">'+
     '<input type="file" name="upload" multiple="multiple">'+
-    '<label>Show all results<input type="checkbox" name="allResults"></label>'+
+    '<label>Show all results<input type="checkbox" name="getAll"></label>'+
+    '<label>Multi mode<input type="checkbox" name="multi"></label>'+
     '<input type="submit" value="Recognize" />'+
     '</form>'+
     '<br/>' +
@@ -55,11 +56,17 @@ function recognize(response, request) {
         response.write(error + "\n");
         response.end();
       } else {
-        iTraffAPI.recognize(file, function(obj){
-            response.writeHead(200, {"Content-Type": "text/plain"});
-            response.write(obj.status == 0 ? obj.id+"" : obj.message);
-            response.end();
-        }, fields.allResults);
+        iTraffAPI.recognize(file, function(obj, error){
+            if(error) {
+                response.writeHead(500, {"Content-Type": "text/plain"});
+                response.write(error + "\n");
+                response.end();
+            } else {
+                response.writeHead(200, {"Content-Type": "text/plain"});
+                response.write(obj.status == 0 ? obj.id+"" : obj.message);
+                response.end();
+            }
+        }, fields.multi, fields.getAll);
       }
     });
   });

@@ -16,6 +16,18 @@ var
   utils   = require('util')
   ;
 
+//limits for query images:
+//for SingleIR
+var SINGLEIR_MAX_FILE_SIZE = 500;    //KBytes
+var SINGLEIR_MIN_DIMENSION = 100;    //pix
+var SINGLEIR_MIN_IMAGE_AREA = 0.05;  //Mpix
+var SINGLEIR_MAX_IMAGE_AREA = 0.31;  //Mpix
+//for MultipleIR
+var MULTIIR_MAX_FILE_SIZE = 3500;    //KBytes
+var MULTIIR_MIN_DIMENSION = 100;     //pix
+var MULTIIR_MIN_IMAGE_AREA = 0.1;    //Mpix
+var MULTIIR_MAX_IMAGE_AREA = 5.1;    //Mpix
+
 // credentials
 var CLIENT_ID = '';
 var API_KEY = '';
@@ -160,6 +172,37 @@ function parse(data) {
   return obj;
 }
 
+/**
+ * Check whether query image follows requirements.
+ * If it does, return null, otherwise return error message.
+ */
+function checkImageLimits(image, multi) {
+  // fetch image data
+  var imageinfo = require('imageinfo');
+  var info = imageinfo(image);
+  var size = image.length / 1024.0; //KB
+  var area = info.width * info.height / 1000000.0 //Mpix
+
+  // check image data
+  if (multi) {
+    if (size > MULTIIR_MAX_FILE_SIZE ||
+        info.width < MULTIIR_MIN_DIMENSION ||
+        info.height < MULTIIR_MIN_DIMENSION ||
+        area < MULTIIR_MIN_IMAGE_AREA ||
+        area > MULTIIR_MAX_IMAGE_AREA)
+      return "Image does not meet the requirements of multi mode query image.\n"
+  } else {
+    if (size > SINGLEIR_MAX_FILE_SIZE ||
+        info.width < SINGLEIR_MIN_DIMENSION ||
+        info.height < SINGLEIR_MIN_DIMENSION ||
+        area < SINGLEIR_MIN_IMAGE_AREA ||
+        area > SINGLEIR_MAX_IMAGE_AREA)
+      return "Image does not meet the requirements of single mode query image.\n"
+  }
+
+  return null;
+}
+
 /**************************************************************************************************************/
 /*  Public, offline methods                                                                                   */
 /**************************************************************************************************************/
@@ -195,42 +238,50 @@ exports.on = function(type, callback) {
 /**************************************************************************************************************/
 
 // recognize object using given photo and call given callback
-exports.recognize = function(data, callback, mode, allResults){
-  var path = '/recognize/';
-  if (mode == 'multi') {
+exports.recognize = function(data, callback, multi, getAll){
+  var error = checkImageLimits(data, multi);
+  if (error) {
+    callback(null, error);
+  } else {
+    var path = '/recognize/';
+    if (multi) {
       path = path + 'multi/';
-  } else if (allResults) {
+      if (getAll) {
+        path = path + 'allInstances/';
+      }
+    } else if (getAll) {
       path = path + 'allResults/';
+    }
+    var hash = crypto.createHash('md5', 'ascii').update(API_KEY).update(data, "binary").digest("hex");
+    var options = {
+      'host': 'clapi.itraff.pl',
+      'port': 80,
+      'path': path + CLIENT_ID,
+      'method': 'POST'
+    };
+
+    var req = http.request(options, function(res) {
+      res.setEncoding('utf8');
+      var respData = '';
+      res.on('end', function () {
+        var obj = JSON.parse(respData);
+        if (callback)
+        callback(obj, null);
+      });
+      res.on('data', function (chunk) {
+        respData+=chunk;
+      });
+    });
+
+    req.on('error', function(e) {
+      console.log('problem with request: ' + e.message);
+    });
+
+    req.setHeader("Content-type", "image/jpeg");
+    req.setHeader("x-itraff-hash", hash);
+    req.write(data, "binary");
+    req.end();
   }
-  var hash = crypto.createHash('md5', 'ascii').update(API_KEY).update(data, "binary").digest("hex");
-  var options = {
-    'host': 'clapi.itraff.pl',
-    'port': 80,
-    'path': path + CLIENT_ID,
-    'method': 'POST'
-  };
-
-  var req = http.request(options, function(res) {
-    res.setEncoding('utf8');
-    var respData = '';
-    res.on('end', function () {
-      var obj = JSON.parse(respData);
-      if (callback)
-        callback(obj);
-    });
-    res.on('data', function (chunk) {
-      respData+=chunk;
-    });
-  });
-
-  req.on('error', function(e) {
-    console.log('problem with request: ' + e.message);
-  });
-  
-  req.setHeader("Content-type", "image/jpeg");
-  req.setHeader("x-itraff-hash", hash);
-  req.write(data, "binary");
-  req.end();
 }
 
 /**
