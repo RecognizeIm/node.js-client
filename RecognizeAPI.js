@@ -285,13 +285,6 @@ exports.recognize = function(data, callback, multi, getAll){
 }
 
 /**
- * Check if user has PRO account
- */
-exports.userPro = function(){
-    callSoapMethod('userPro');
-}
-
-/**
  * Get user data
  */
 exports.userGet = function() {
