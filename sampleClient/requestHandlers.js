@@ -5,7 +5,7 @@ var querystring = require("querystring"),
     iTraffAPI = require("recognize.im");
    
 
-iTraffAPI.setCredentials(64, '6d97d28451', '4430d3822ff5d8c640de55a4f35218d8');
+iTraffAPI.setCredentials(1, '', '');
 
 function start(response) {
   console.log("Request handler 'start' was called.");
@@ -49,21 +49,31 @@ function recognize(response, request) {
   console.log("about to parse");
   form.parse(request, function(error, fields, files) {
     console.log("parsing done");
-
-    fs.readFile(files.upload.path, "binary", function(error, file) {
+    fs.readFile(files.upload.path, "binary", function(error, data) {
       if(error) {
         response.writeHead(500, {"Content-Type": "text/plain"});
         response.write(error + "\n");
         response.end();
       } else {
-        iTraffAPI.recognize(file, function(obj, error){
+        iTraffAPI.recognize(data, function(obj, error){
             if(error) {
                 response.writeHead(500, {"Content-Type": "text/plain"});
                 response.write(error + "\n");
                 response.end();
             } else {
-                response.writeHead(200, {"Content-Type": "text/plain"});
-                response.write(obj.status == 0 ? obj.id+"" : obj.message);
+                response.writeHead(200, {"Content-Type": "text/html"});
+				response.write("<html><head></head><body>");
+				if (obj.status == 0) {
+					response.write("<p>Recognized objects: " + obj.objects.length + "</p>");
+					response.write("<p><ul>");
+					for (var o in obj.objects) {
+						response.write("<li>" + o.name + "</li>");
+					}
+					response.write("</ul></p>");
+				} else {
+					response.write(obj.message);
+				}
+				response.write("</body></html>");
                 response.end();
             }
         }, fields.multi, fields.getAll);
